@@ -4,7 +4,7 @@ import datetime
 import subprocess
 import signal
 
-limit = 30     # number of ping-pongs to perform
+limit = 100     # number of ping-pongs to perform
 
 # Create python 3 agent
 host = '127.0.0.1'
@@ -24,10 +24,11 @@ while py3.msg[0] < limit:
 print('PY3 Finished')
 # close other script for sure
 ipyProc.send_signal(signal.SIGTERM)
+print('IPY terminated')
 
 """
 Results:
-Cross instance communication works - can perform 10-12 ping-pongs per second.
+Cross instance communication works - can perform over 10 'ping-pongs' per second.
 
 Discussion:
 While this could be used for workaround, it may not work, or be as fast,

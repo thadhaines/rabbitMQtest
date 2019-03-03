@@ -9,7 +9,7 @@ def main(host,limit):
     ipy = AMQPAgent(host)
     ipy.msg = [0,'init', 'time']
 
-    while ipy.msg < limit:
+    while ipy.msg[0] < limit:
         ipy.receive('toIPY',ipy.callback)
         ipy.msg[0] += 1
         ipy.msg[1] = 'IPY - pong'

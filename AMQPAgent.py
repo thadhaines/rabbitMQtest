@@ -18,7 +18,8 @@ class AMQPAgent():
         channel = connection.channel()
 
         channel.queue_declare(queue=msgQueue) # ensure queue created
-
+        print(datetime.datetime.now().strftime('%H:%M:%S.%f') +
+            " Sending \t %r" % json.dumps(msg))
         channel.basic_publish(exchange='', 
                               routing_key=msgQueue, 
                               body=json.dumps(msg) )
@@ -27,7 +28,7 @@ class AMQPAgent():
     def callback(self, ch, method, properties, body):
         """should be altered to specific needs - proof of concept shown"""
         print(datetime.datetime.now().strftime('%H:%M:%S.%f') +
-            " Received %r" % body)
+            " Received \t%r" % body)
         self.msg = json.loads(body)
         ch.stop_consuming() # required in callback to prevent infinite loop
 
