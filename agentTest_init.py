@@ -3,6 +3,7 @@ from AMQPAgent import AMQPAgent
 import datetime
 import subprocess
 import signal
+import time
 
 limit = 100     # number of ping-pongs to perform
 
@@ -13,6 +14,7 @@ py3 = AMQPAgent(host, [0,'init','time'])
 # start 2nd process
 cmd = "ipy32 agentTest_ipy.py " + host + ' ' + str(limit)
 ipyProc = subprocess.Popen(cmd)
+start =time.time()
 
 while py3.msg[0] < limit:
     py3.msg[0] += 1
@@ -25,7 +27,8 @@ print('PY3 Finished')
 # close other script for sure
 ipyProc.send_signal(signal.SIGTERM)
 print('IPY terminated')
-
+end =time.time()
+print('Elapsed time =  %f' % (end-start))
 """
 Results:
 Cross instance communication works - can perform over 10 'ping-pongs' per second.
