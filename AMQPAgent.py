@@ -7,7 +7,8 @@ import datetime
 class AMQPAgent():
     """Can send and receive msgs, init with host string and msg format
         uses json dumps and loads to send/receive native python objects"""
-    def __init__(self, host, msg=None):
+    def __init__(self, name, host, msg=None):
+        self.name = name
         self.host = host
         self.msg = msg
 
@@ -19,7 +20,7 @@ class AMQPAgent():
 
         channel.queue_declare(queue=msgQueue) # ensure queue created
         print(datetime.datetime.now().strftime('%H:%M:%S.%f') +
-            " Sending \t %r" % json.dumps(msg))
+            ' ' + self.name + " Sending \t %r" % json.dumps(msg))
         channel.basic_publish(exchange='', 
                               routing_key=msgQueue, 
                               body=json.dumps(msg) )
@@ -28,9 +29,13 @@ class AMQPAgent():
     def callback(self, ch, method, properties, body):
         """should be altered to specific needs - proof of concept shown"""
         print(datetime.datetime.now().strftime('%H:%M:%S.%f') +
-            " Received \t%r" % body)
+            ' ' + self.name + " Received \t%r" % body)
+
         self.msg = json.loads(body)
-        ch.stop_consuming() # required in callback to prevent infinite loop
+
+        if self.msg['PassCtrl'] == True:
+            self.msg['PassCtrl'] = False
+            ch.stop_consuming() # required in callback to prevent infinite loop
 
     def receive(self,msgQueue, callbackF):
         """Waits for msg to arrive in msgQueue, usues callbackF"""

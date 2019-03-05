@@ -5,23 +5,43 @@ import subprocess
 import signal
 import time
 
-limit = 100     # number of ping-pongs to perform
+def getTstr():
+    """Return Time String"""
+    return datetime.datetime.now().strftime('%H:%M:%S.%f')
+
+totLimit = 11  # total number of messages to send in test
+bLimit = 3     # number of msgs per batch
 
 # Create python 3 agent
 host = '127.0.0.1'
-py3 = AMQPAgent(host, [0,'init','time'])
+msgForm = {'PassCtrl':False, 
+           'time':getTstr(), 
+           'sharedValue':0.0, 
+           'sender':'PY3'}
+py3 = AMQPAgent('PY3', host, msgForm)
 
 # start 2nd process
-cmd = "ipy32 agentTest_ipy.py " + host + ' ' + str(limit)
+cmd = "ipy32 agentTest_ipy.py " + host + ' ' + str(totLimit) +' ' + str(bLimit)
 ipyProc = subprocess.Popen(cmd)
 start =time.time()
+runFlag = 1
+while runFlag:
+    
+    for messageCount in range(bLimit):
+        py3.msg['sender'] = 'PY3'
+        py3.msg['time'] = getTstr()
+        if py3.msg['sharedValue'] >= totLimit:
+            runFlag = 0
+            break
+        py3.msg['sharedValue'] += 1
+        py3.send('toIPY',py3.msg)
 
-while py3.msg[0] < limit:
-    py3.msg[0] += 1
-    py3.msg[1] = 'PY3 - Ping'
-    py3.msg[2] = datetime.datetime.now().strftime('%H:%M:%S.%f')
-    py3.send('toIPY',py3.msg)
-    py3.receive('toPY3', py3.callback)
+    if runFlag:
+        py3.msg['time'] = getTstr()
+        py3.msg['PassCtrl'] = True
+        py3.send('toIPY',py3.msg)
+
+        py3.receive('toPY3', py3.callback)
 
 print('PY3 Finished')
 # close other script for sure
@@ -29,18 +49,21 @@ ipyProc.send_signal(signal.SIGTERM)
 print('IPY terminated')
 end =time.time()
 print('Elapsed time =  %f' % (end-start))
+
 """
 Results:
-Cross instance communication works - can perform over 10 'ping-pongs' per second.
+Code acts as expected, i.e. messages sent and recieved in a parallel fashion
+enabeling the recieving process to take action while new messages continue 
+to be received.
+
+The inital delay between the first batch send and the begining of
+parallel processing is probably due to queue intialization within 
+rabbitMQ or Erlang.
 
 Discussion:
-While this could be used for workaround, it may not work, or be as fast,
-as a database option for sending large amounts of data. Although the msg
-creation could be altered to send more data, it may not be worth the effort.
+Loop structure and message send / receive points are important to 
+make the process run smoothly.
 
-AMQP could be used to alert processes of database availability and a SQL
-database could be used for the main data sharing point.
+Research a way to clear queues - lingering messages can cause problems.
 
-Since a wait is already programmed into the agent receive function it may 
-make this AMQP/SQL option semi-straight forward.
 """
