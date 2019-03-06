@@ -4,12 +4,13 @@ import datetime
 import subprocess
 import signal
 import time
+import pika
 
 def getTstr():
     """Return Time String"""
     return datetime.datetime.now().strftime('%H:%M:%S.%f')
 
-totLimit = 11  # total number of messages to send in test
+totLimit = 111  # total number of messages to send in test
 bLimit = 3     # number of msgs per batch
 
 # Create python 3 agent
@@ -20,6 +21,14 @@ msgForm = {'sender':'PY3',
            'sharedValue':0.0, 
            'sender':'PY3',}
 py3 = AMQPAgent('PY3', host, msgForm)
+
+# Clear AMQP queues
+cParams = pika.ConnectionParameters(host=host)
+connection = pika.BlockingConnection(cParams)
+channel = connection.channel()
+channel.queue_purge('toPY3')
+channel.queue_purge('toIPY')
+connection.close()
 
 # start 2nd process
 cmd = "ipy32 agentTest_ipy.py " + host + ' ' + str(totLimit) +' ' + str(bLimit)
