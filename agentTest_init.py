@@ -14,10 +14,11 @@ bLimit = 3     # number of msgs per batch
 
 # Create python 3 agent
 host = '127.0.0.1'
-msgForm = {'PassCtrl':False, 
+msgForm = {'sender':'PY3',
+           'PassCtrl':False, 
            'time':getTstr(), 
            'sharedValue':0.0, 
-           'sender':'PY3'}
+           'sender':'PY3',}
 py3 = AMQPAgent('PY3', host, msgForm)
 
 # start 2nd process
